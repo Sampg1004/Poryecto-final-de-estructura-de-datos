@@ -10,7 +10,24 @@ class Nodo:
     _SINONIMOS_POZO = ("POZO", "MANHOLE", "INTERMEDIO")
     _SINONIMOS_SUMIDERO = ("SUMIDERO", "SINK", "T")
 
+    @classmethod
+    def _sinonimo(cls, tipo: str) -> str:
+        t = str(tipo).strip().upper()
+        if t in cls._SINONIMOS_FUENTE:
+            return cls.TIPO_FUENTE
+        if t in cls._SINONIMOS_POZO:
+            return cls.TIPO_POZO
+        if t in cls._SINONIMOS_SUMIDERO:
+            return cls.TIPO_SUMIDERO
+        raise ValueError("Tipo de nodo no válido.")
 
+    @property
+    def tipo(self) -> str:
+        return self._tipo
+
+    @tipo.setter
+    def tipo(self, valor: str):
+        self._tipo = self._sinonimo(valor)
 
     # Representa un nodo en un sistema de drenaje o alcantarillado.
     def __init__(
@@ -48,15 +65,5 @@ class Nodo:
 
         self.tuberias_entrantes: List[str] = []
         self.tuberias_salientes: List[str] = []
-
-        @classmethod
-        def _sinonimo(cls, tipo: str) -> str:
-            t = str(tipo).strip().upper()
-            if t in cls._SINONIMOS_FUENTE:
-                return cls.TIPO_FUENTE
-            elif t in cls._SINONIMOS_POZO:
-                return cls.TIPO_POZO
-            elif t in cls._SINONIMOS_SUMIDERO:
-                return cls.TIPO_SUMIDERO
-            else:
-                raise ValueError("Tipo de nodo no válido.")
+        
+    
