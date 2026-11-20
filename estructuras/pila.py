@@ -1,4 +1,3 @@
-# estructuras/pila.py
 from typing import Any, Iterator, Optional
 
 
