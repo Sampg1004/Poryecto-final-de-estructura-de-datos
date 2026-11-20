@@ -1,7 +1,6 @@
 
 from typing import List, Optional
 
-
 class Nodo:
     TIPO_FUENTE = "FUENTE"
     TIPO_POZO = "POZO"
