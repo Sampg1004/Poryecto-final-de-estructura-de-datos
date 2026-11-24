@@ -10,6 +10,7 @@ class Grafo:
         #
         # Vértices = alcantarillas / pozos de inspección / sumideros (Nodo).
         # Aristas  = tuberías dirigidas (Tuberia).
+        #
 
     def __init__(self):
         self.nodos = TablaHash()
@@ -161,5 +162,5 @@ class Grafo:
 
     def __str__(self) -> str:
         return f"Grafo(nodos={self.cantidad_nodos()}, tuberias={self.cantidad_tuberias()})"
-
+    
     __repr__ = __str__
