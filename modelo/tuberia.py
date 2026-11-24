@@ -2,8 +2,6 @@ from typing import Optional
 import math
 
 class Tuberia:
-
-
     def __init__(
         self,
         id_tuberia: str,

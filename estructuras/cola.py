@@ -1,4 +1,3 @@
-# estructuras/cola.py
 from typing import Any, Iterator, Optional
 
 class _Nodo:
