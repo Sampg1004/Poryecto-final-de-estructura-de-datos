@@ -103,6 +103,18 @@ class TablaHash:
         par = self._buscar_par(clave_norm, cubeta)
         return None if par is None else par[1]
 
+    def obtener(self, clave: Any, defecto: Any = None) -> Any:
+        """
+        Devuelve el valor asociado a la clave, o defecto si no existe o no es válida.
+        Equivalente a dict.get(clave, defecto).
+        """
+        try:
+            clave_norm = self._normalizar(clave)
+        except ValueError:
+            return defecto
+        par = self._buscar_par(clave_norm)
+        return defecto if par is None else par[1]
+
     def contiene(self, clave: Any) -> bool:
         """Retorna True si la clave existe en la tabla, False en caso contrario."""
         try:

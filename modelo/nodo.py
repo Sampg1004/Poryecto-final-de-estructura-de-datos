@@ -96,7 +96,7 @@ class Nodo:
         if tuberia not in self.tuberias_entrantes:
             self.tuberias_entrantes.append(tuberia)
     
-    def obtener_vecinos(self) -> List["Nodo"]:
+    def obtener_vecinos(self) -> List[str]:
         vecinos = []
         for tuberia in self.tuberias_salientes:
             if tuberia.nodo_destino not in vecinos:

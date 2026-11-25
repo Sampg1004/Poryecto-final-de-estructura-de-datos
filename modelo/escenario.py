@@ -1,5 +1,6 @@
-from typing import List, Optional, Dict
-from dataclasses import dataclass, field
+from typing import List, Optional
+from dataclasses import dataclass
+from estructuras.tabla_hash import TablaHash
 
 @dataclass
 class EscenarioLluvia:
@@ -31,26 +32,29 @@ class EscenarioLluvia:
 class GestorEscenarios:
 
     def __init__(self):
-        self.escenarios: Dict[str, EscenarioLluvia] = {}
+        self.escenarios = TablaHash()
+        self._orden_escenarios: List[str] = []
         self.escenario_activo: Optional[EscenarioLluvia] = None
 
     def agregar_escenario(self, escenario: EscenarioLluvia) -> None:
         if not isinstance(escenario, EscenarioLluvia):
             raise TypeError("Se esperaba una instancia de EscenarioLluvia.")
-        if escenario.nombre in self.escenarios:
+        try:
+            self.escenarios.insertar(escenario.nombre, escenario)
+        except ValueError:
             raise ValueError(
                 f"Ya existe un escenario con nombre '{escenario.nombre}'."
             )
-        self.escenarios[escenario.nombre] = escenario
+        self._orden_escenarios.append(escenario.nombre)
 
     def obtener_escenario(self, nombre: str) -> Optional[EscenarioLluvia]:
-        return self.escenarios.get(nombre)
+        return self.escenarios.obtener(nombre)
 
     def existe_escenario(self, nombre: str) -> bool:
-        return nombre in self.escenarios
+        return self.escenarios.contiene(nombre)
 
     def listar_escenarios(self) -> List[str]:
-        return list(self.escenarios.keys())
+        return list(self._orden_escenarios)
 
     def seleccionar_escenario(self, nombre: str) -> bool:
         escenario = self.obtener_escenario(nombre)

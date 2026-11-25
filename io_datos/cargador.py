@@ -91,6 +91,8 @@ class CargadorDatos:
         ruta: str,
         carpeta_csv: Optional[str] = None,
         duracion_lluvia_min: float = 60.0,
+        factor_area: float = 1.0,
+        areas_fuentes: Optional[Dict[str, float]] = None,
     ):
         """
         Args:
@@ -98,10 +100,17 @@ class CargadorDatos:
             carpeta_csv: si se indica, se exportan allí las hojas del Excel a CSV.
             duracion_lluvia_min: duración del evento de lluvia (la guía no la
                 incluye en el dataset: "será establecida por el docente").
+            factor_area: factor de escala multiplicador del área total de drenaje.
+            areas_fuentes: diccionario opcional {id_fuente: area_ha} para asignar
+                áreas de drenaje personalizadas por alcantarilla.
         """
+        if factor_area <= 0:
+            raise ValueError("El factor de área debe ser mayor que cero.")
         self.ruta = ruta
         self.carpeta_csv = carpeta_csv
         self.duracion_lluvia_min = float(duracion_lluvia_min)
+        self.factor_area = float(factor_area)
+        self.areas_fuentes = areas_fuentes
         self.grafo = Grafo()
         self.gestor_escenarios = GestorEscenarios()
         self.advertencias: List[str] = []
@@ -317,13 +326,23 @@ class CargadorDatos:
         fuentes = self.grafo.obtener_fuentes()
         if not fuentes:
             raise ErrorCargaDatos("La red no tiene alcantarillas fuente donde incorporar la lluvia.")
-        parte = a / len(fuentes)
-        for nodo in fuentes:
-            nodo.area_drenaje = parte
-            nodo.coef_escorrentia = c
-        self.advertencias.append(
-            f"Cuenca: A={a:g} ha repartida en partes iguales entre {len(fuentes)} fuentes ({parte:g} ha c/u), C={c:g}."
-        )
+        if self.areas_fuentes is not None:
+            for nodo in fuentes:
+                nodo.area_drenaje = float(self.areas_fuentes.get(nodo.id_nodo, 0.0))
+                nodo.coef_escorrentia = c
+            self.advertencias.append(
+                f"Cuenca: áreas asignadas por configuración individual (C={c:g})."
+            )
+        else:
+            area_efectiva = a * self.factor_area
+            parte = area_efectiva / len(fuentes)
+            for nodo in fuentes:
+                nodo.area_drenaje = parte
+                nodo.coef_escorrentia = c
+            self.advertencias.append(
+                f"Cuenca: A={area_efectiva:g} ha (factor={self.factor_area:g}) repartida en partes iguales "
+                f"entre {len(fuentes)} fuentes ({parte:g} ha c/u), C={c:g}."
+            )
 
     def _cargar_escenarios(self) -> None:
         regs = self._registros("escenarios")

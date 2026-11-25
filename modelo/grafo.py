@@ -1,4 +1,4 @@
-from typing import List, Optional, Set
+from typing import List, Optional
 
 from estructuras.tabla_hash import TablaHash
 from estructuras.cola import Cola
@@ -24,11 +24,13 @@ class Grafo:
     def agregar_nodo(self, nodo: Nodo) -> None:
         if not isinstance(nodo, Nodo):
             raise TypeError("Se esperaba una instancia de Nodo.")
-        if self.nodos.contiene(nodo.id_nodo):
+        try:
+            self.nodos.insertar(nodo.id_nodo, nodo)
+        except ValueError:
             raise ValueError(f"Ya existe un nodo con id '{nodo.id_nodo}'.")
-        self.nodos.insertar(nodo.id_nodo, nodo)
-        self.adyacencia.insertar(nodo.id_nodo, [])
-        self.adyacencia_inversa.insertar(nodo.id_nodo, [])
+        # Comparte las listas del nodo para mantener una única fuente de adyacencia
+        self.adyacencia.insertar(nodo.id_nodo, nodo.tuberias_salientes)
+        self.adyacencia_inversa.insertar(nodo.id_nodo, nodo.tuberias_entrantes)
         self._orden_nodos.append(nodo.id_nodo)
 
     def obtener_nodo(self, id_nodo: str) -> Optional[Nodo]:
@@ -59,19 +61,20 @@ class Grafo:
     def agregar_tuberia(self, tuberia: Tuberia) -> None:
         if not isinstance(tuberia, Tuberia):
             raise TypeError("Se esperaba una instancia de Tuberia.")
-        if self.tuberias.contiene(tuberia.id_tuberia):
-            raise ValueError(f"Ya existe una tubería con id '{tuberia.id_tuberia}'.")
-        if not self.existe_nodo(tuberia.nodo_origen):
+        nodo_origen = self.nodos.obtener(tuberia.nodo_origen)
+        if nodo_origen is None:
             raise ValueError(f"El nodo origen '{tuberia.nodo_origen}' no existe en el grafo.")
-        if not self.existe_nodo(tuberia.nodo_destino):
+        nodo_destino = self.nodos.obtener(tuberia.nodo_destino)
+        if nodo_destino is None:
             raise ValueError(f"El nodo destino '{tuberia.nodo_destino}' no existe en el grafo.")
+        try:
+            self.tuberias.insertar(tuberia.id_tuberia, tuberia)
+        except ValueError:
+            raise ValueError(f"Ya existe una tubería con id '{tuberia.id_tuberia}'.")
 
-        self.tuberias.insertar(tuberia.id_tuberia, tuberia)
         self._orden_tuberias.append(tuberia.id_tuberia)
-        self.adyacencia.obtener(tuberia.nodo_origen).append(tuberia)
-        self.adyacencia_inversa.obtener(tuberia.nodo_destino).append(tuberia)
-        self.nodos.obtener(tuberia.nodo_origen).agregar_tuberia_saliente(tuberia)
-        self.nodos.obtener(tuberia.nodo_destino).agregar_tuberia_entrante(tuberia)
+        nodo_origen.agregar_tuberia_saliente(tuberia)
+        nodo_destino.agregar_tuberia_entrante(tuberia)
 
     def obtener_tuberia(self, id_tuberia: str) -> Optional[Tuberia]:
         return self.tuberias.obtener(id_tuberia)
@@ -110,7 +113,8 @@ class Grafo:
         # Existe un camino dirigido origen -> destino (BFS con la Cola propia).
         if not self.existe_nodo(origen) or not self.existe_nodo(destino):
             return False
-        visitados: Set[str] = {origen}
+        visitados = TablaHash()
+        visitados.insertar(origen, True)
         cola = Cola()
         cola.encolar(origen)
         while not cola.esta_vacia():
@@ -118,26 +122,29 @@ class Grafo:
             if actual == destino:
                 return True
             for tuberia in self.obtener_tuberias_salientes(actual):
-                if tuberia.nodo_destino not in visitados:
-                    visitados.add(tuberia.nodo_destino)
+                if not visitados.contiene(tuberia.nodo_destino):
+                    visitados.insertar(tuberia.nodo_destino, True)
                     cola.encolar(tuberia.nodo_destino)
         return False
 
     def orden_topologico(self) -> Optional[List[str]]:
         # Orden topológico (algoritmo de Kahn con la Cola propia).
         # Devuelve None si el grafo tiene ciclos.
-        grados = {i: self.grado_entrada(i) for i in self._orden_nodos}
+        grados = TablaHash()
         cola = Cola()
         for i in self._orden_nodos:
-            if grados[i] == 0:
+            grado = self.grado_entrada(i)
+            grados.insertar(i, grado)
+            if grado == 0:
                 cola.encolar(i)
         orden: List[str] = []
         while not cola.esta_vacia():
             actual = cola.desencolar()
             orden.append(actual)
             for tuberia in self.obtener_tuberias_salientes(actual):
-                grados[tuberia.nodo_destino] -= 1
-                if grados[tuberia.nodo_destino] == 0:
+                nuevo_grado = grados[tuberia.nodo_destino] - 1
+                grados.actualizar(tuberia.nodo_destino, nuevo_grado)
+                if nuevo_grado == 0:
                     cola.encolar(tuberia.nodo_destino)
         return orden if len(orden) == len(self._orden_nodos) else None
 

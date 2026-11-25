@@ -45,17 +45,17 @@ class Tuberia:
 
         self.caudal_demandado: float = 0.0
         self.caudal_transportado: float = 0.0
-        self.excseso: float = 0.0
+        self.exceso: float = 0.0
         self.velocidad: float = 0.0
         self.porcentaje_utilizacion: float = 0.0
         self.sobrecargada: bool = False
         self.tiempo_transito: float = 0.0
-    
-        def _velocidad_manning_llena(self) -> float:
-            radio_hidraulico = self.diametro / 4.0
-            if self.pendiente <= 0:
-                return 0.0
-            return (1.0 / self.coeficiente_manning) * radio_hidraulico ** (2.0 / 3.0) * math.sqrt(self.pendiente)
+
+    def _velocidad_manning_llena(self) -> float:
+        radio_hidraulico = self.diametro / 4.0
+        if self.pendiente <= 0:
+            return 0.0
+        return (1.0 / self.coeficiente_manning) * radio_hidraulico ** (2.0 / 3.0) * math.sqrt(self.pendiente)
 
     @property
     def tiempo_transito_referencia(self) -> float:
